@@ -79,40 +79,6 @@ const (
 	ShippingPreferenceSetProvidedAddress string = "SET_PROVIDED_ADDRESS"
 )
 
-const (
-	EventPaymentCaptureCompleted       string = "PAYMENT.CAPTURE.COMPLETED"
-	EventPaymentCaptureDenied          string = "PAYMENT.CAPTURE.DENIED"
-	EventPaymentCaptureRefunded        string = "PAYMENT.CAPTURE.REFUNDED"
-	EventMerchantOnboardingCompleted   string = "MERCHANT.ONBOARDING.COMPLETED"
-	EventMerchantPartnerConsentRevoked string = "MERCHANT.PARTNER-CONSENT.REVOKED"
-)
-
-const (
-	OperationAPIIntegration   string = "API_INTEGRATION"
-	ProductExpressCheckout    string = "EXPRESS_CHECKOUT"
-	IntegrationMethodPayPal   string = "PAYPAL"
-	IntegrationTypeThirdParty string = "THIRD_PARTY"
-	ConsentShareData          string = "SHARE_DATA_CONSENT"
-)
-
-const (
-	FeaturePayment               string = "PAYMENT"
-	FeatureRefund                string = "REFUND"
-	FeatureFuturePayment         string = "FUTURE_PAYMENT"
-	FeatureDirectPayment         string = "DIRECT_PAYMENT"
-	FeaturePartnerFee            string = "PARTNER_FEE"
-	FeatureDelayFunds            string = "DELAY_FUNDS_DISBURSEMENT"
-	FeatureReadSellerDispute     string = "READ_SELLER_DISPUTE"
-	FeatureUpdateSellerDispute   string = "UPDATE_SELLER_DISPUTE"
-	FeatureDisputeReadBuyer      string = "DISPUTE_READ_BUYER"
-	FeatureUpdateCustomerDispute string = "UPDATE_CUSTOMER_DISPUTES"
-)
-
-const (
-	LinkRelSelf      string = "self"
-	LinkRelActionURL string = "action_url"
-)
-
 type (
 	// JSONTime overrides MarshalJson method to format in ISO8601
 	JSONTime time.Time
@@ -166,17 +132,17 @@ type (
 
 	// Authorization struct
 	Authorization struct {
-		ID               string                `json:"id,omitempty"`
-		CustomID         string                `json:"custom_id,omitempty"`
-		InvoiceID        string                `json:"invoice_id,omitempty"`
-		Status           string                `json:"status,omitempty"`
-		StatusDetails    *CaptureStatusDetails `json:"status_details,omitempty"`
-		Amount           *PurchaseUnitAmount   `json:"amount,omitempty"`
-		SellerProtection *SellerProtection     `json:"seller_protection,omitempty"`
-		CreateTime       *time.Time            `json:"create_time,omitempty"`
-		UpdateTime       *time.Time            `json:"update_time,omitempty"`
-		ExpirationTime   *time.Time            `json:"expiration_time,omitempty"`
-		Links            []Link                `json:"links,omitempty"`
+		Amount                    *Amount    `json:"amount,omitempty"`
+		CreateTime                *time.Time `json:"create_time,omitempty"`
+		UpdateTime                *time.Time `json:"update_time,omitempty"`
+		State                     string     `json:"state,omitempty"`
+		ParentPayment             string     `json:"parent_payment,omitempty"`
+		ID                        string     `json:"id,omitempty"`
+		ValidUntil                *time.Time `json:"valid_until,omitempty"`
+		Links                     []Link     `json:"links,omitempty"`
+		ClearingTime              string     `json:"clearing_time,omitempty"`
+		ProtectionEligibility     string     `json:"protection_eligibility,omitempty"`
+		ProtectionEligibilityType string     `json:"protection_eligibility_type,omitempty"`
 	}
 
 	// AuthorizeOrderResponse .
@@ -194,47 +160,6 @@ type (
 	AuthorizeOrderRequest struct {
 		PaymentSource      *PaymentSource     `json:"payment_source,omitempty"`
 		ApplicationContext ApplicationContext `json:"application_context,omitempty"`
-	}
-
-	// https://developer.paypal.com/docs/api/payments/v2/#definition-platform_fee
-	PlatformFee struct {
-		Amount *Money          `json:"amount,omitempty"`
-		Payee  *PayeeForOrders `json:"payee,omitempty"`
-	}
-
-	// https://developer.paypal.com/docs/api/payments/v2/#definition-payment_instruction
-	PaymentInstruction struct {
-		PlatformFees     []PlatformFee `json:"platform_fees,omitempty"`
-		DisbursementMode string        `json:"disbursement_mode,omitempty"`
-	}
-
-	// https://developer.paypal.com/docs/api/payments/v2/#authorizations_capture
-	PaymentCaptureRequest struct {
-		InvoiceID      string `json:"invoice_id,omitempty"`
-		NoteToPayer    string `json:"note_to_payer,omitempty"`
-		SoftDescriptor string `json:"soft_descriptor,omitempty"`
-		Amount         *Money `json:"amount,omitempty"`
-		FinalCapture   bool   `json:"final_capture,omitempty"`
-	}
-
-	SellerProtection struct {
-		Status            string   `json:"status,omitempty"`
-		DisputeCategories []string `json:"dispute_categories,omitempty"`
-	}
-
-	// https://developer.paypal.com/docs/api/payments/v2/#definition-capture_status_details
-	CaptureStatusDetails struct {
-		Reason string `json:"reason,omitempty"`
-	}
-
-	PaymentCaptureResponse struct {
-		Status           string                `json:"status,omitempty"`
-		StatusDetails    *CaptureStatusDetails `json:"status_details,omitempty"`
-		ID               string                `json:"id,omitempty"`
-		Amount           *Money                `json:"amount,omitempty"`
-		InvoiceID        string                `json:"invoice_id,omitempty"`
-		FinalCapture     bool                  `json:"final_capture,omitempty"`
-		DisbursementMode string                `json:"disbursement_mode,omitempty"`
 	}
 
 	// CaptureOrderRequest - https://developer.paypal.com/docs/api/orders/v2/#orders_capture
@@ -276,14 +201,24 @@ type (
 
 	// Capture struct
 	Capture struct {
-		Amount         *Amount    `json:"amount,omitempty"`
-		IsFinalCapture bool       `json:"is_final_capture"`
-		CreateTime     *time.Time `json:"create_time,omitempty"`
-		UpdateTime     *time.Time `json:"update_time,omitempty"`
-		State          string     `json:"state,omitempty"`
-		ParentPayment  string     `json:"parent_payment,omitempty"`
-		ID             string     `json:"id,omitempty"`
-		Links          []Link     `json:"links,omitempty"`
+		ID                        string                     `json:"id,omitempty"`
+		Status                    string                     `json:"status,omitempty"`
+		Amount                    *AmountPayout              `json:"amount,omitempty"`
+		IsFinalCapture            bool                       `json:"is_final_capture"`
+		SellerReceivableBreakdown *SellerReceivableBreakdown `json:"seller_receivable_breakdown,omitempty"`
+		Links                     []Link                     `json:"links,omitempty"`
+		CreateTime                *time.Time                 `json:"create_time,omitempty"`
+		UpdateTime                *time.Time                 `json:"update_time,omitempty"`
+	}
+
+	// SellerReceivableBreakdown struct
+	SellerReceivableBreakdown struct {
+		GrossAmount      *AmountPayout `json:"gross_amount,omitempty"`
+		PaypalFee        *AmountPayout `json:"paypal_fee,omitempty"`
+		NetAmount        *AmountPayout `json:"net_amount,omitempty"`
+		ReceivableAmount *AmountPayout `json:"receivable_amount,omitempty"`
+		ExchangeRate     *AmountPayout `json:"exchange_rate,omitempty"`
+		PlatformFees     *AmountPayout `json:"platform_fees,omitempty"`
 	}
 
 	// ChargeModel struct
@@ -434,11 +369,10 @@ type (
 
 	// Link struct
 	Link struct {
-		Href        string `json:"href"`
-		Rel         string `json:"rel,omitempty"`
-		Method      string `json:"method,omitempty"`
-		Description string `json:"description,omitempty"`
-		Enctype     string `json:"enctype,omitempty"`
+		Href    string `json:"href"`
+		Rel     string `json:"rel,omitempty"`
+		Method  string `json:"method,omitempty"`
+		Enctype string `json:"enctype,omitempty"`
 	}
 
 	// PurchaseUnitAmount struct
@@ -471,6 +405,12 @@ type (
 	PurchaseUnit struct {
 		ReferenceID string              `json:"reference_id"`
 		Amount      *PurchaseUnitAmount `json:"amount,omitempty"`
+		Payments    *Payments           `json:"payments,omitempty"`
+	}
+
+	// Payments struct
+	Payments struct {
+		Captures []Capture `json:"captures,omitempty"`
 	}
 
 	// TaxInfo used for orders.
@@ -543,9 +483,8 @@ type (
 
 	// CaptureAmount struct
 	CaptureAmount struct {
-		ID       string              `json:"id,omitempty"`
-		CustomID string              `json:"custom_id,omitempty"`
-		Amount   *PurchaseUnitAmount `json:"amount,omitempty"`
+		ID     string              `json:"id,omitempty"`
+		Amount *PurchaseUnitAmount `json:"amount,omitempty"`
 	}
 
 	// CapturedPayments has the amounts for a captured order
@@ -891,89 +830,6 @@ type (
 		LandingPageType   string `json:"landing_page_type,omitempty"`
 		BankTXNPendingURL string `json:"bank_txn_pending_url,omitempty"`
 		UserAction        string `json:"user_action,omitempty"`
-	}
-
-	VerifyWebhookResponse struct {
-		VerificationStatus string `json:"verification_status,omitempty"`
-	}
-	
-	WebhookEvent struct {
-		ID              string           `json:"id"`
-		CreateTime      time.Time        `json:"create_time"`
-		ResourceType    string           `json:"resource_type"`
-		EventType       string           `json:"event_type"`
-		Summary         string           `json:"summary,omitempty"`
-		Resource        Resource         `json:"resource"`
-		Links           []Link           `json:"links"`
-		EventVersion    string           `json:"event_version,omitempty"`
-		ResourceVersion string           `json:"resource_version,omitempty"`
-	}
-	
-	Resource struct {
-		// Payment Resource type
-		ID                     string                  `json:"id,omitempty"`
-		Status                 string                  `json:"status,omitempty"`
-		StatusDetails          *CaptureStatusDetails   `json:"status_details,omitempty"`
-		Amount                 *PurchaseUnitAmount     `json:"amount,omitempty"`
-		UpdateTime             string                  `json:"update_time,omitempty"`
-		CreateTime             string                  `json:"create_time,omitempty"`
-		ExpirationTime         string                  `json:"expiration_time,omitempty"`
-		SellerProtection       *SellerProtection       `json:"seller_protection,omitempty"`
-		FinalCapture           bool                    `json:"final_capture,omitempty"`
-		SellerPayableBreakdown *CaptureSellerBreakdown `json:"seller_payable_breakdown,omitempty"`
-		NoteToPayer            string                  `json:"note_to_payer,omitempty"`
-		// merchant-onboarding Resource type
-		PartnerClientID string `json:"partner_client_id,omitempty"`
-		MerchantID      string `json:"merchant_id,omitempty"`
-		// Common
-		Links []Link `json:"links,omitempty"`
-	}
-	
-	CaptureSellerBreakdown struct {
-		GrossAmount         PurchaseUnitAmount  `json:"gross_amount"`
-		PayPalFee           PurchaseUnitAmount  `json:"paypal_fee"`
-		NetAmount           PurchaseUnitAmount  `json:"net_amount"`
-		TotalRefundedAmount *PurchaseUnitAmount `json:"total_refunded_amount,omitempty"`
-	}
-
-	ReferralRequest struct {
-		TrackingID            string                 `json:"tracking_id"`
-		PartnerConfigOverride *PartnerConfigOverride `json:"partner_config_override,omitemtpy"`
-		Operations            []Operation            `json:"operations,omitempty"`
-		Products              []string               `json:"products,omitempty"`
-		LegalConsents         []Consent              `json:"legal_consents,omitempty"`
-	}
-	
-	PartnerConfigOverride struct {
-		PartnerLogoURL       string `json:"partner_logo_url,omitempty"`
-		ReturnURL            string `json:"return_url,omitempty"`
-		ReturnURLDescription string `json:"return_url_description,omitempty"`
-		ActionRenewalURL     string `json:"action_renewal_url,omitempty"`
-		ShowAddCreditCard    *bool  `json:"show_add_credit_card,omitempty"`
-	}
-
-	Operation struct {
-		Operation                string              `json:"operation"`
-		APIIntegrationPreference *IntegrationDetails `json:"api_integration_preference,omitempty"`
-	}
-
-	IntegrationDetails struct {
-		RestAPIIntegration *RestAPIIntegration `json:"rest_api_integration,omitempty"`
-	}
-
-	RestAPIIntegration struct {
-		IntegrationMethod string            `json:"integration_method"`
-		IntegrationType   string            `json:"integration_type"`
-		ThirdPartyDetails ThirdPartyDetails `json:"third_party_details"`
-	}
-
-	ThirdPartyDetails struct {
-		Features []string `json:"features"`
-	}
-
-	Consent struct {
-		Type    string `json:"type"`
-		Granted bool   `json:"granted"`
 	}
 )
 
