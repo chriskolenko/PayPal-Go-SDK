@@ -1,3 +1,3 @@
-module github.com/plutov/paypal/v3
+module github.com/chriskolenko/go-paypal
 
-go 1.12
+go 1.13
